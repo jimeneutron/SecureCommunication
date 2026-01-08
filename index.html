@@ -73,6 +73,7 @@ button {
   color: white;
   font-size: 1rem;
   cursor: pointer;
+  transition: background 0.2s;
 }
 
 button:hover {
@@ -85,6 +86,7 @@ button:hover {
   background: #020617;
   border-radius: 8px;
   word-break: break-all;
+  min-height: 40px;
 }
 </style>
 </head>
@@ -99,6 +101,7 @@ button:hover {
   <div class="buttons">
     <button onclick="encrypt()">Encrypt</button>
     <button onclick="decrypt()">Decrypt</button>
+    <button onclick="copyOutput()">Copy</button>
   </div>
 
   <div class="output" id="output"></div>
@@ -223,6 +226,17 @@ function decrypt() {
 
   const plain = polyEncrypt(text, key, true);
   document.getElementById("output").textContent = plain;
+}
+
+/* =====================
+   COPY TO CLIPBOARD
+===================== */
+function copyOutput() {
+  const output = document.getElementById("output").textContent;
+  if (!output) return alert("Nothing to copy");
+  navigator.clipboard.writeText(output)
+    .then(() => alert("Copied to clipboard!"))
+    .catch(() => alert("Failed to copy"));
 }
 </script>
 </body>
