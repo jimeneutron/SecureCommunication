@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2563eb">
-
 <meta charset="UTF-8">
 <title>Polyalphabetic Bit Cipher</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- PWA manifest -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2563eb">
 
 <style>
 :root {
@@ -16,9 +17,7 @@
   --text: #e5e7eb;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
@@ -40,10 +39,7 @@ body {
   box-shadow: 0 20px 50px rgba(0,0,0,0.6);
 }
 
-h1 {
-  text-align: center;
-  margin-bottom: 1rem;
-}
+h1 { text-align: center; margin-bottom: 1rem; }
 
 textarea, input {
   width: 100%;
@@ -56,10 +52,7 @@ textarea, input {
   font-size: 1rem;
 }
 
-textarea {
-  min-height: 100px;
-  resize: vertical;
-}
+textarea { min-height: 100px; resize: vertical; }
 
 .buttons {
   display: flex;
@@ -79,9 +72,7 @@ button {
   transition: background 0.2s;
 }
 
-button:hover {
-  background: #1d4ed8;
-}
+button:hover { background: #1d4ed8; }
 
 .output {
   margin-top: 1rem;
@@ -124,12 +115,14 @@ function shift(letter, value) {
   return ALPHABET[(idx + value + 26) % 26];
 }
 
+// Fully lowercase the key
 function keyToNums(key) {
   return [...key].map(c => ALPHABET.indexOf(c));
 }
 
 function polyEncrypt(text, key, reverse=false) {
-  text = text.toLowerCase();
+  text = text.toLowerCase();  // lowercase input
+  key = key.toLowerCase();    // lowercase key
   const keyNums = keyToNums(key);
   let ki = 0;
   let out = "";
@@ -235,20 +228,28 @@ function decrypt() {
    COPY TO CLIPBOARD
 ===================== */
 function copyOutput() {
-  const output = document.getElementById("output").textContent;
-  if (!output) return alert("Nothing to copy");
-  navigator.clipboard.writeText(output)
-    .then(() => alert("Copied to clipboard!"))
-    .catch(() => alert("Failed to copy"));
+  const outputDiv = document.getElementById("output");
+  const output = outputDiv.textContent;
+  if (!output) return;
+
+  navigator.clipboard.writeText(output).then(() => {
+    const original = outputDiv.textContent;
+    outputDiv.textContent = "Copied!";
+    setTimeout(() => outputDiv.textContent = original, 1000);
+  }).catch(() => {
+    outputDiv.textContent = "Failed to copy";
+    setTimeout(() => outputDiv.textContent = output, 1000);
+  });
 }
-</script>
-  <script>
+
+/* =====================
+   REGISTER SERVICE WORKER
+===================== */
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./service-worker.js')
     .then(() => console.log("Service Worker registered"))
     .catch(err => console.error("SW registration failed:", err));
 }
 </script>
-
 </body>
 </html>
