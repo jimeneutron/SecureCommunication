@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Polyalphabetic Bit Cipher</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+:root {
+  --bg: #0f172a;
+  --panel: #020617;
+  --accent: #2563eb;
+  --text: #e5e7eb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  font-family: system-ui, sans-serif;
+  color: var(--text);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 650px;
+  background: var(--panel);
+  padding: 1.5rem;
+  border-radius: 14px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+textarea, input {
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  border-radius: 8px;
+  border: none;
+  background: #020617;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+button {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
+
+.output {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #020617;
+  border-radius: 8px;
+  word-break: break-all;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+  <h1>🔐 Bit Cipher</h1>
+
+  <textarea id="input" placeholder="Enter text or encrypted digits"></textarea>
+  <input id="key" placeholder="Secret key">
+
+  <div class="buttons">
+    <button onclick="encrypt()">Encrypt</button>
+    <button onclick="decrypt()">Decrypt</button>
+  </div>
+
+  <div class="output" id="output"></div>
+</div>
+
+<script>
+/* =====================
+   CONSTANTS
+===================== */
+const ALPHABET = "abcdefghijklmnopqrstuvwxyz";
+
+/* =====================
+   POLYALPHABETIC
+===================== */
+function shift(letter, value) {
+  const idx = ALPHABET.indexOf(letter);
+  return ALPHABET[(idx + value + 26) % 26];
+}
+
+function keyToNums(key) {
+  return [...key].map(c => ALPHABET.indexOf(c));
+}
+
+function polyEncrypt(text, key, reverse=false) {
+  text = text.toLowerCase();
+  const keyNums = keyToNums(key);
+  let ki = 0;
+  let out = "";
+
+  for (let c of text) {
+    if (!ALPHABET.includes(c)) {
+      out += c;
+    } else {
+      out += shift(c, reverse ? -keyNums[ki] : keyNums[ki]);
+      ki = (ki + 1) % keyNums.length;
+    }
+  }
+  return out;
+}
+
+/* =====================
+   6-BIT MAPPING
+===================== */
+const CHAR_TO_BITS = {
+  a:"100000",b:"010000",c:"110000",
+  d:"001000",e:"101000",f:"011000",
+  g:"111000",h:"000100",i:"100100",
+  j:"010100",k:"110100",l:"001100",
+  m:"101100",n:"011100",o:"111100",
+  p:"000010",q:"100010",r:"010010",
+  s:"110010",t:"001010",u:"101010",
+  v:"011010",w:"111010",x:"000110",
+  y:"100110",z:"010110",
+  " ":"000000",
+  "0":"001001","1":"110110","2":"001110",
+  "3":"101110","4":"011110","5":"111110",
+  "6":"000001","7":"100001","8":"010001",
+  "9":"110001",
+  ".":"101001",",":"011001","?":"111001",
+  ":":"000101","-":"010101","!":"110101",
+  "(":"001101"
+};
+
+const BITS_TO_CHAR = Object.fromEntries(
+  Object.entries(CHAR_TO_BITS).map(([k,v]) => [v,k])
+);
+
+/* =====================
+   ENCRYPT
+===================== */
+function encrypt() {
+  const text = document.getElementById("input").value;
+  const key = document.getElementById("key").value;
+  if (!key) return alert("Enter a key");
+
+  const poly = polyEncrypt(text, key);
+  let bits = "";
+
+  for (let c of poly) {
+    if (!(c in CHAR_TO_BITS)) {
+      return alert("Unsupported character: " + c);
+    }
+    bits += CHAR_TO_BITS[c];
+  }
+
+  let digits = "";
+  for (let b of bits) {
+    digits += b === "1"
+      ? Math.floor(Math.random()*4 + 6)
+      : Math.floor(Math.random()*5);
+  }
+
+  document.getElementById("output").textContent = digits;
+}
+
+/* =====================
+   DECRYPT
+===================== */
+function decrypt() {
+  const digits = document.getElementById("input").value;
+  const key = document.getElementById("key").value;
+  if (!key) return alert("Enter a key");
+
+  let bits = "";
+  for (let d of digits) {
+    if (isNaN(d)) return alert("Digits only");
+    bits += (parseInt(d) < 5 ? "0" : "1");
+  }
+
+  if (bits.length % 6 !== 0) {
+    return alert("Invalid ciphertext length");
+  }
+
+  let text = "";
+  for (let i = 0; i < bits.length; i += 6) {
+    const chunk = bits.slice(i, i+6);
+    if (!(chunk in BITS_TO_CHAR)) {
+      return alert("Invalid bit chunk: " + chunk);
+    }
+    text += BITS_TO_CHAR[chunk];
+  }
+
+  const plain = polyEncrypt(text, key, true);
+  document.getElementById("output").textContent = plain;
+}
+</script>
+</body>
+</html>
